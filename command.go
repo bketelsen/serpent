@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"strings"
 	"testing"
+	"time"
 	"unicode"
 
 	"log/slog"
@@ -234,7 +235,9 @@ func (inv *Invocation) WithOS() *Invocation {
 		i.Args = os.Args[1:]
 		i.Environ = ParseEnviron(os.Environ(), "")
 		i.Net = osNet{}
-		i.Logger = slog.New(tint.NewHandler(i.Stderr, nil))
+		i.Logger = slog.New(tint.NewHandler(i.Stderr, &tint.Options{
+			TimeFormat: time.Kitchen,
+		}))
 	})
 }
 
