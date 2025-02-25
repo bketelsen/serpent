@@ -1,6 +1,6 @@
 # serpent
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/coder/serpent.svg)](https://pkg.go.dev/github.com/coder/serpent)
+[![Go Reference](https://pkg.go.dev/badge/github.com/bketelsen/serpent.svg)](https://pkg.go.dev/github.com/bketelsen/serpent)
 
 `serpent` is a Go CLI configuration framework based on [cobra](https://github.com/spf13/cobra) and used by [coder/coder](https://github.com/coder/coder).
 It's designed for large-scale CLIs with dozens of commands and hundreds
@@ -27,7 +27,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/coder/serpent"
+	"github.com/bketelsen/serpent"
 )
 
 func main() {
@@ -88,7 +88,7 @@ type Option struct {
 }
 ```
 
-And is used by each [Command](https://pkg.go.dev/github.com/coder/serpent#Command) when
+And is used by each [Command](https://pkg.go.dev/github.com/bketelsen/serpent#Command) when
 passed as an array to the `Options` field.
 
 ## More coming...

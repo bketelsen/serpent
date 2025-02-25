@@ -13,7 +13,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/coder/serpent"
+	"github.com/bketelsen/serpent"
 
 	"github.com/natefinch/atomic"
 )

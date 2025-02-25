@@ -12,8 +12,9 @@ import (
 	"testing"
 	"unicode"
 
-	"cdr.dev/slog"
+	"log/slog"
 
+	"github.com/lmittmann/tint"
 	"github.com/spf13/pflag"
 	"golang.org/x/exp/constraints"
 	"golang.org/x/exp/slices"
@@ -195,7 +196,6 @@ func (c *Command) Invoke(args ...string) *Invocation {
 		Stdout:  io.Discard,
 		Stderr:  io.Discard,
 		Stdin:   strings.NewReader(""),
-		Logger:  slog.Make(),
 	}
 }
 
@@ -216,8 +216,7 @@ type Invocation struct {
 	Stderr  io.Writer
 	Stdin   io.Reader
 
-	// Deprecated
-	Logger slog.Logger
+	Logger *slog.Logger
 	// Deprecated
 	Net Net
 
@@ -235,6 +234,7 @@ func (inv *Invocation) WithOS() *Invocation {
 		i.Args = os.Args[1:]
 		i.Environ = ParseEnviron(os.Environ(), "")
 		i.Net = osNet{}
+		i.Logger = slog.New(tint.NewHandler(i.Stderr, nil))
 	})
 }
 

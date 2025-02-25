@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/coder/serpent"
+	"github.com/bketelsen/serpent"
 )
 
 // FileHandler returns a handler that completes file names, using the

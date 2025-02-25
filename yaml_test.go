@@ -8,7 +8,7 @@ import (
 	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v3"
 
-	"github.com/coder/serpent"
+	"github.com/bketelsen/serpent"
 )
 
 func TestOptionSet_YAML(t *testing.T) {

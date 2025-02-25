@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/xerrors"
 
-	serpent "github.com/coder/serpent"
-	"github.com/coder/serpent/completion"
+	serpent "github.com/bketelsen/serpent"
+	"github.com/bketelsen/serpent/completion"
 )
 
 // ioBufs is the standard input, output, and error for a command.

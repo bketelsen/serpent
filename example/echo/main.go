@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/coder/serpent"
+	"github.com/bketelsen/serpent"
 )
 
 func main() {
