@@ -1,4 +1,8 @@
 {{- /* Heavily inspired by the Go toolchain and fd */ -}}
+{{ with .Long }}
+{{- . | wrapTTY }}
+{{"\n"}}
+{{- end}}
 {{prettyHeader "Usage"}}
 {{indent .FullUsage 2}}
 

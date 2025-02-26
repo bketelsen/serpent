@@ -13,6 +13,7 @@ func main() {
 	cmd := serpent.Command{
 		Use:   "echo <text>",
 		Short: "Prints the given text to the console.",
+		Long:  "Prints the given text to the console.",
 		Options: serpent.OptionSet{
 			{
 				Name:        "upper",
