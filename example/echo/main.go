@@ -8,15 +8,18 @@ import (
 	"github.com/bketelsen/serpent"
 )
 
+var Version = "1.0.0-dev"
+
 func main() {
 	var upper bool
 	cmd := serpent.Command{
-		Use:   "echo <text>",
-		Short: "Prints the given text to the console.",
-		Long:  "Prints the given text to the console.",
+		Use:     "echo <text>",
+		Short:   "Prints the given text to the console.",
+		Long:    "Prints the given text to the console.",
+		Version: Version,
 		Options: serpent.OptionSet{
 			{
-				Name:        "upper",
+
 				Value:       serpent.BoolOf(&upper),
 				Flag:        "upper",
 				Description: "Prints the text in upper case.",

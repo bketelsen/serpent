@@ -318,8 +318,9 @@ func TestCommand(t *testing.T) {
 		)
 		fio := fakeIO(i)
 		err := i.Run()
+
 		require.Error(t, err, fio.Stdout.String())
-		require.ErrorContains(t, err, "Missing values")
+		require.ErrorContains(t, err, "missing values")
 	})
 
 	t.Run("RequiredFlagsMissingWithHelp", func(t *testing.T) {
@@ -342,7 +343,7 @@ func TestCommand(t *testing.T) {
 		fio := fakeIO(i)
 		err := i.Run()
 		require.Error(t, err, fio.Stdout.String())
-		require.ErrorContains(t, err, "Missing values for the required flags: req-bool")
+		require.ErrorContains(t, err, "missing values for the required flags: req-bool")
 	})
 
 	t.Run("RequiredFlagsMissingString", func(t *testing.T) {
@@ -353,7 +354,7 @@ func TestCommand(t *testing.T) {
 		fio := fakeIO(i)
 		err := i.Run()
 		require.Error(t, err, fio.Stdout.String())
-		require.ErrorContains(t, err, "Missing values for the required flags: req-string")
+		require.ErrorContains(t, err, "missing values for the required flags: req-string")
 	})
 
 	t.Run("RequiredFlagsInvalid", func(t *testing.T) {

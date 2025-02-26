@@ -92,6 +92,12 @@ type Command struct {
 	CompletionHandler CompletionHandlerFunc
 
 	ContactInfo *ContactInfo
+
+	// Version defines the version for this command. If this value is non-empty and the command does not
+	// define a "version" flag, a "version" boolean flag will be added to the command and, if specified,
+	// will print content of the "Version" variable. A shorthand "v" flag will also be added if the
+	// command does not define one.
+	Version string
 }
 
 // AddSubcommands adds the given subcommands, setting their
@@ -164,6 +170,29 @@ func (c *Command) init() error {
 		err := child.init()
 		if err != nil {
 			merr = errors.Join(merr, fmt.Errorf("command %v: %w", child.Name(), err))
+		}
+	}
+	hasVersion := false
+	if c.Parent == nil {
+		if c.Version != "" {
+			nameVersion := c.Options.ByName("version")
+			if nameVersion != nil {
+				hasVersion = true
+			}
+			flagVersion := c.Options.ByFlag("version")
+			if flagVersion != nil {
+				hasVersion = true
+			}
+
+			if !hasVersion {
+				var val bool
+				c.Options.Add(Option{
+					Flag:  "version",
+					Value: BoolOf(&val),
+					Name:  "version",
+				})
+			}
+
 		}
 	}
 	return merr
@@ -380,6 +409,7 @@ func (inv *Invocation) run(state *runState) error {
 			inv.Command.Deprecated,
 		)
 	}
+
 	err := inv.Command.Options.ParseEnv(inv.Environ)
 	if err != nil {
 		return fmt.Errorf("parsing env: %w", err)
@@ -526,7 +556,17 @@ func (inv *Invocation) run(state *runState) error {
 		// In non-raw-arg mode, we want to skip over flags.
 		inv.Args = parsedArgs[state.commandDepth:]
 	}
+	if inv.Command.Version != "" {
+		vflag := inv.Command.Options.ByFlag("version")
+		if vflag != nil {
+			fl := inv.parsedFlags.Lookup(vflag.Flag)
+			if fl != nil && fl.Changed {
+				inv.Println(inv.Command.Name() + " " + inv.Command.Version)
+				return nil
+			}
 
+		}
+	}
 	mw := inv.Command.Middleware
 	if mw == nil {
 		mw = Chain()
