@@ -58,7 +58,7 @@ func main() {
 		},
 		Handler: func(inv *serpent.Invocation) error {
 			if len(inv.Args) == 0 {
-				inv.Stderr.Write([]byte("error: missing text\n"))
+				inv.PrintErr("error: missing text")
 
 				os.Exit(1)
 			}
@@ -76,7 +76,7 @@ func main() {
 				Use:   "sub",
 				Short: "A subcommand",
 				Handler: func(inv *serpent.Invocation) error {
-					inv.Stdout.Write([]byte("subcommand"))
+					inv.Println("subcommand")
 					return nil
 				},
 				Options: serpent.OptionSet{

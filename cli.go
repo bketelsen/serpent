@@ -4,15 +4,12 @@ package serpent
 
 import (
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/muesli/termenv"
 
 	"github.com/charmbracelet/lipgloss"
 )
-
-var Canceled = errors.New("canceled")
 
 // DefaultStyles compose visual elements of the UI.
 var DefaultStyles Styles
@@ -37,8 +34,7 @@ type Styles struct {
 }
 
 var (
-	color     termenv.Profile
-	colorOnce sync.Once
+	color termenv.Profile
 )
 
 var (
@@ -47,7 +43,6 @@ var (
 	green         = lipgloss.Color("2")
 	yellow        = lipgloss.Color("3")
 	magenta       = lipgloss.Color("5")
-	white         = lipgloss.Color("7")
 	brightBlue    = lipgloss.Color("12")
 	brightMagenta = lipgloss.Color("13")
 )
@@ -102,13 +97,6 @@ func KeyValuePair(key, value string) string {
 	return k + ":" + v
 }
 
-var (
-	normalFg = lipgloss.AdaptiveColor{Light: "235", Dark: "252"}
-	indigo   = lipgloss.AdaptiveColor{Light: "#5A56E0", Dark: "#7571F9"}
-	cream    = lipgloss.AdaptiveColor{Light: "#FFFDF5", Dark: "#FFFDF5"}
-	fuchsia  = lipgloss.Color("#F780E2")
-)
-
 func init() {
 	// We do not adapt the color based on whether the terminal is light or dark.
 	// Doing so would require a round-trip between the program and the terminal
@@ -155,7 +143,7 @@ func init() {
 // ValidateNotEmpty is a helper function to disallow empty inputs!
 func ValidateNotEmpty(s string) error {
 	if s == "" {
-		return errors.New("Must be provided!")
+		return errors.New("must be provided")
 	}
 	return nil
 }

@@ -507,7 +507,7 @@ func (inv *Invocation) run(state *runState) error {
 	}
 	// Don't error for missing flags if `--help` was supplied.
 	if len(missing) > 0 && !inv.IsCompletionMode() && !errors.Is(state.flagParseErr, pflag.ErrHelp) {
-		return fmt.Errorf("Missing values for the required flags: %s", strings.Join(missing, ", "))
+		return fmt.Errorf("missing values for the required flags: %s", strings.Join(missing, ", "))
 	}
 
 	if inv.Command.RawArgs {
