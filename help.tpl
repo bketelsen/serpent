@@ -1,17 +1,10 @@
 {{- /* Heavily inspired by the Go toolchain and fd */ -}}
-{{ with .Long }}
-{{- . | wrapTTY }}
+{{ with .Short }}
+{{- .  | wrapTTY }}
 {{"\n"}}
 {{- end}}
 {{prettyHeader "Usage"}}
 {{indent .FullUsage 2}}
-
-
-{{ with .Short }}
-{{- indent . 2 | wrapTTY }}
-{{"\n"}}
-{{- end}}
-
 {{- with .Deprecated }}
 {{- indent (printf "DEPRECATED: %s" .) 2 | wrapTTY }}
 {{"\n"}}
