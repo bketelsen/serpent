@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/bketelsen/serpent"
 	"github.com/bketelsen/serpent/completion"
+	"github.com/bketelsen/serpent/ui"
 )
 
 // installCommand returns a serpent command that helps
@@ -44,31 +43,31 @@ func main() {
 	)
 	cmd := serpent.Command{
 		Use:   "completetest <text>",
-		Short: "Prints the given text to the console.",
+		Short: "Prints a table.",
 		ContactInfo: &serpent.ContactInfo{
 			Issues: "https://github.com/bketelsen/serpent/issues/new",
 		},
-		Options: serpent.OptionSet{
-			{
-				Name:        "different",
-				Value:       serpent.BoolOf(&upper),
-				Flag:        "different",
-				Description: "Do the command differently.",
-			},
-		},
+
 		Handler: func(inv *serpent.Invocation) error {
-			if len(inv.Args) == 0 {
-				inv.PrintErr("error: missing text")
 
-				os.Exit(1)
+			people := []Person{
+				{
+					Name:       "Bill",
+					Occupation: "Adventurer",
+					Age:        21,
+				},
+				{
+					Name:       "Ted",
+					Occupation: "Adventurer",
+					Age:        21,
+				},
+			}
+			output, err := ui.DisplayTable(people, "", nil)
+			if err != nil {
+				return err
 			}
 
-			text := inv.Args[0]
-			if upper {
-				text = strings.ToUpper(text)
-			}
-
-			inv.Println(text)
+			inv.Println(output)
 			return nil
 		},
 		Children: []*serpent.Command{
@@ -131,4 +130,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+type Person struct {
+	Name       string `table:"name,default_sort"`
+	Age        int    `table:"age"`
+	Occupation string `table:"occupation"`
 }
