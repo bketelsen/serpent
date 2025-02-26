@@ -7,7 +7,6 @@ require (
 	github.com/charmbracelet/log v0.4.0
 	github.com/coder/pretty v0.0.0-20230908205945-e89ba86370e0
 	github.com/fatih/structtag v1.2.0
-	github.com/go-logfmt/logfmt v0.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jedib0t/go-pretty/v6 v6.6.6
 	github.com/mitchellh/go-homedir v1.1.0
@@ -26,6 +25,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/x/ansi v0.4.2 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
