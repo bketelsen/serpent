@@ -56,4 +56,19 @@
 ———
 Run `{{ rootCommandName . }} --help` for a list of global options.
 {{- else }}
+{{- if .ContactInfo }}
+{{ prettyHeader "Contact"}}
+{{- with .ContactInfo }}
+{{- with .RepoLink }}{{- print "\n "}}Repository:
+    {{ keyword . }}{{ end }}
+{{- with .IssuesLink }}{{- print "\n "}}Issues:
+    {{ keyword . }}{{ end }}
+{{- with .ChatLink }}{{- print "\n "}}Chat:
+    {{ keyword . }}{{ end }}
+{{- with .EmailLink }}{{- print "\n "}}Email:
+    {{ keyword . }}{{ end }}
 {{- end }}
+{{- else }}
+{{- end }}
+{{- end }}
+

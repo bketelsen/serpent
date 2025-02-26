@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -20,24 +21,35 @@ func main() {
 				Description: "Prints the text in upper case.",
 			},
 		},
+		ContactInfo: &serpent.ContactInfo{
+			Issues: "https://github.com/bketelsen/serpent/issues/new",
+		},
+
 		Handler: func(inv *serpent.Invocation) error {
 			if len(inv.Args) == 0 {
-				inv.Stderr.Write([]byte("error: missing text\n"))
+				inv.PrintErrln("error: missing text")
 				os.Exit(1)
 			}
 
 			text := inv.Args[0]
 			if upper {
 				text = strings.ToUpper(text)
-			}
 
-			inv.Stdout.Write([]byte(text))
+			}
+			inv.Warn("Header", "a line")
+			inv.Info("Header", "a line")
+			inv.Error("Header", "a line")
+			inv.Logger.Info("hello")
+
+			inv.Println(text)
+
 			return nil
 		},
 	}
 
 	err := cmd.Invoke().WithOS().Run()
 	if err != nil {
-		panic(err)
+		fmt.Println("Error:", err.Error())
+
 	}
 }

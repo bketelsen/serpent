@@ -7,7 +7,6 @@ import (
 
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -87,13 +86,13 @@ func (optSet *OptionSet) MarshalYAML() (any, error) {
 			// Validators do a wrap, and should be handled by the else statement.
 			v, err := m.MarshalYAML()
 			if err != nil {
-				return nil, xerrors.Errorf(
+				return nil, fmt.Errorf(
 					"marshal %q: %w", opt.Name, err,
 				)
 			}
 			valueNode, ok = v.(yaml.Node)
 			if !ok {
-				return nil, xerrors.Errorf(
+				return nil, fmt.Errorf(
 					"marshal %q: unexpected underlying type %T",
 					opt.Name, v,
 				)
@@ -105,7 +104,7 @@ func (optSet *OptionSet) MarshalYAML() (any, error) {
 			// the underlying node.
 			byt, err := yaml.Marshal(opt.Value)
 			if err != nil {
-				return nil, xerrors.Errorf(
+				return nil, fmt.Errorf(
 					"marshal %q: %w", opt.Name, err,
 				)
 			}
@@ -113,12 +112,12 @@ func (optSet *OptionSet) MarshalYAML() (any, error) {
 			var docNode yaml.Node
 			err = yaml.Unmarshal(byt, &docNode)
 			if err != nil {
-				return nil, xerrors.Errorf(
+				return nil, fmt.Errorf(
 					"unmarshal %q: %w", opt.Name, err,
 				)
 			}
 			if len(docNode.Content) != 1 {
-				return nil, xerrors.Errorf(
+				return nil, fmt.Errorf(
 					"unmarshal %q: expected one node, got %d",
 					opt.Name, len(docNode.Content),
 				)
@@ -129,7 +128,7 @@ func (optSet *OptionSet) MarshalYAML() (any, error) {
 		var group []string
 		for _, g := range opt.Group.Ancestry() {
 			if g.YAML == "" {
-				return nil, xerrors.Errorf(
+				return nil, fmt.Errorf(
 					"group yaml name is empty for %q, groups: %+v",
 					opt.Name,
 					opt.Group,
@@ -158,10 +157,10 @@ func (optSet *OptionSet) MarshalYAML() (any, error) {
 // and values as the corresponding YAML nodes.
 func mapYAMLNodes(parent *yaml.Node) (map[string]*yaml.Node, error) {
 	if parent.Kind != yaml.MappingNode {
-		return nil, xerrors.Errorf("expected mapping node, got type %v", parent.Kind)
+		return nil, fmt.Errorf("expected mapping node, got type %v", parent.Kind)
 	}
 	if len(parent.Content)%2 != 0 {
-		return nil, xerrors.Errorf("expected an even number of k/v pairs, got %d", len(parent.Content))
+		return nil, fmt.Errorf("expected an even number of k/v pairs, got %d", len(parent.Content))
 	}
 	var (
 		key  string
@@ -173,7 +172,7 @@ func mapYAMLNodes(parent *yaml.Node) (map[string]*yaml.Node, error) {
 			if child.Kind != yaml.ScalarNode {
 				// We immediately because the rest of the code is bound to fail
 				// if we don't know to expect a key or a value.
-				return nil, xerrors.Errorf("expected scalar node for key, got type %v", child.Kind)
+				return nil, fmt.Errorf("expected scalar node for key, got type %v", child.Kind)
 			}
 			key = child.Value
 			continue
@@ -189,7 +188,7 @@ func mapYAMLNodes(parent *yaml.Node) (map[string]*yaml.Node, error) {
 
 		sub, err := mapYAMLNodes(child)
 		if err != nil {
-			merr = errors.Join(merr, xerrors.Errorf("mapping node %q: %w", key, err))
+			merr = errors.Join(merr, fmt.Errorf("mapping node %q: %w", key, err))
 			continue
 		}
 		for k, v := range sub {
@@ -220,9 +219,9 @@ func (o *Option) setFromYAMLNode(n *yaml.Node) error {
 		}
 		return n.Decode(o.Value)
 	case yaml.MappingNode:
-		return xerrors.Errorf("mapping nodes must implement yaml.Unmarshaler")
+		return fmt.Errorf("mapping nodes must implement yaml.Unmarshaler")
 	default:
-		return xerrors.Errorf("unexpected node kind %v", n.Kind)
+		return fmt.Errorf("unexpected node kind %v", n.Kind)
 	}
 }
 
@@ -233,14 +232,14 @@ func (optSet *OptionSet) UnmarshalYAML(rootNode *yaml.Node) error {
 	// not support multiple documents in a single file.
 	if rootNode.Kind == yaml.DocumentNode {
 		if len(rootNode.Content) != 1 {
-			return xerrors.Errorf("expected one node in document, got %d", len(rootNode.Content))
+			return fmt.Errorf("expected one node in document, got %d", len(rootNode.Content))
 		}
 		rootNode = rootNode.Content[0]
 	}
 
 	yamlNodes, err := mapYAMLNodes(rootNode)
 	if err != nil {
-		return xerrors.Errorf("mapping nodes: %w", err)
+		return fmt.Errorf("mapping nodes: %w", err)
 	}
 
 	matchedNodes := make(map[string]*yaml.Node, len(yamlNodes))
@@ -254,7 +253,7 @@ func (optSet *OptionSet) UnmarshalYAML(rootNode *yaml.Node) error {
 		var group []string
 		for _, g := range opt.Group.Ancestry() {
 			if g.YAML == "" {
-				return xerrors.Errorf(
+				return fmt.Errorf(
 					"group yaml name is empty for %q, groups: %+v",
 					opt.Name,
 					opt.Group,
@@ -275,7 +274,7 @@ func (optSet *OptionSet) UnmarshalYAML(rootNode *yaml.Node) error {
 			continue
 		}
 		if err := opt.setFromYAMLNode(node); err != nil {
-			merr = errors.Join(merr, xerrors.Errorf("setting %q: %w", opt.YAML, err))
+			merr = errors.Join(merr, fmt.Errorf("setting %q: %w", opt.YAML, err))
 		}
 	}
 
@@ -294,7 +293,7 @@ func (optSet *OptionSet) UnmarshalYAML(rootNode *yaml.Node) error {
 		}
 	}
 	for k := range yamlNodes {
-		merr = errors.Join(merr, xerrors.Errorf("unknown option %q", k))
+		merr = errors.Join(merr, fmt.Errorf("unknown option %q", k))
 	}
 
 	return merr

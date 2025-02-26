@@ -3,13 +3,13 @@ package serpent_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"golang.org/x/xerrors"
 
 	serpent "github.com/bketelsen/serpent"
 	"github.com/bketelsen/serpent/completion"
@@ -84,7 +84,7 @@ func sampleCommand(t *testing.T) *serpent.Command {
 						Value: serpent.Validate(serpent.StringOf(&reqStr), func(value *serpent.String) error {
 							ok := strings.Contains(value.String(), " ")
 							if !ok {
-								return xerrors.Errorf("string must contain a space")
+								return fmt.Errorf("string must contain a space")
 							}
 							return nil
 						}),
@@ -514,7 +514,7 @@ func TestCommand_RawArgs(t *testing.T) {
 					RawArgs: true,
 					Handler: (func(i *serpent.Invocation) error {
 						if v := i.ParsedFlags().Lookup("password").Value.String(); v != "codershack" {
-							return xerrors.Errorf("password %q is wrong!", v)
+							return fmt.Errorf("password %q is wrong!", v)
 						}
 						_, _ = i.Stdout.Write([]byte(strings.Join(i.Args, " ")))
 						return nil
@@ -584,7 +584,7 @@ func TestCommand_HyphenHyphen(t *testing.T) {
 		Handler: (func(i *serpent.Invocation) error {
 			_, _ = i.Stdout.Write([]byte(strings.Join(i.Args, " ")))
 			if verbose {
-				return xerrors.New("verbose should not be true because flag after --")
+				return errors.New("verbose should not be true because flag after --")
 			}
 			return nil
 		}),
@@ -614,7 +614,7 @@ func TestCommand_ContextCancels(t *testing.T) {
 		Handler: (func(i *serpent.Invocation) error {
 			gotCtx = i.Context()
 			if err := gotCtx.Err(); err != nil {
-				return xerrors.Errorf("unexpected context error: %w", i.Context().Err())
+				return fmt.Errorf("unexpected context error: %w", i.Context().Err())
 			}
 			return nil
 		}),
@@ -637,7 +637,7 @@ func TestCommand_Help(t *testing.T) {
 				return nil
 			}),
 			Handler: (func(i *serpent.Invocation) error {
-				return xerrors.New("should not be called")
+				return errors.New("should not be called")
 			}),
 		}
 	}

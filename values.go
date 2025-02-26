@@ -3,6 +3,7 @@ package serpent
 import (
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -350,7 +350,7 @@ type HostPort struct {
 
 func (hp *HostPort) Set(v string) error {
 	if v == "" {
-		return xerrors.Errorf("must not be empty")
+		return fmt.Errorf("must not be empty")
 	}
 	var err error
 	hp.Host, hp.Port, err = net.SplitHostPort(v)
@@ -493,7 +493,7 @@ func (discardValue) UnmarshalJSON([]byte) error {
 type jsonValue json.RawMessage
 
 func (jsonValue) Set(string) error {
-	return xerrors.Errorf("json value is read-only")
+	return fmt.Errorf("json value is read-only")
 }
 
 func (jsonValue) String() string {
@@ -506,7 +506,7 @@ func (jsonValue) Type() string {
 
 func (j *jsonValue) UnmarshalJSON(data []byte) error {
 	if j == nil {
-		return xerrors.New("json.RawMessage: UnmarshalJSON on nil pointer")
+		return errors.New("json.RawMessage: UnmarshalJSON on nil pointer")
 	}
 	*j = append((*j)[0:0], data...)
 	return nil
@@ -535,7 +535,7 @@ func (e *Enum) Set(v string) error {
 			return nil
 		}
 	}
-	return xerrors.Errorf("invalid choice: %s, should be one of %v", v, e.Choices)
+	return fmt.Errorf("invalid choice: %s, should be one of %v", v, e.Choices)
 }
 
 func (e *Enum) Type() string {
@@ -572,7 +572,7 @@ func (r *Regexp) UnmarshalJSON(data []byte) error {
 
 	exp, err := regexp.Compile(source)
 	if err != nil {
-		return xerrors.Errorf("invalid regex expression: %w", err)
+		return fmt.Errorf("invalid regex expression: %w", err)
 	}
 	*r = Regexp(*exp)
 	return nil
@@ -592,7 +592,7 @@ func (r *Regexp) UnmarshalYAML(n *yaml.Node) error {
 func (r *Regexp) Set(v string) error {
 	exp, err := regexp.Compile(v)
 	if err != nil {
-		return xerrors.Errorf("invalid regex expression: %w", err)
+		return fmt.Errorf("invalid regex expression: %w", err)
 	}
 	*r = Regexp(*exp)
 	return nil
@@ -647,7 +647,7 @@ func (e *EnumArray) Append(s string) error {
 			return nil
 		}
 	}
-	return xerrors.Errorf("invalid choice: %s, should be one of %v", s, e.Choices)
+	return fmt.Errorf("invalid choice: %s, should be one of %v", s, e.Choices)
 }
 
 func (e *EnumArray) GetSlice() []string {
@@ -664,7 +664,7 @@ func (e *EnumArray) Replace(ss []string) error {
 			}
 		}
 		if !found {
-			return xerrors.Errorf("invalid choice: %s, should be one of %v", s, e.Choices)
+			return fmt.Errorf("invalid choice: %s, should be one of %v", s, e.Choices)
 		}
 	}
 	*e.Value = ss

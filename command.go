@@ -10,18 +10,36 @@ import (
 	"os/signal"
 	"strings"
 	"testing"
-	"time"
 	"unicode"
 
-	"log/slog"
-
-	"github.com/lmittmann/tint"
+	"github.com/charmbracelet/log"
 	"github.com/spf13/pflag"
 	"golang.org/x/exp/constraints"
 	"golang.org/x/exp/slices"
-	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v3"
 )
+
+var logger = log.New(os.Stderr)
+
+type ContactInfo struct {
+	Repo   string
+	Issues string
+	Chat   string
+	Email  string
+}
+
+func (c *ContactInfo) RepoLink() string {
+	return c.Repo
+}
+func (c *ContactInfo) IssuesLink() string {
+	return c.Issues
+}
+func (c *ContactInfo) ChatLink() string {
+	return c.Chat
+}
+func (c *ContactInfo) EmailLink() string {
+	return c.Email
+}
 
 // Command describes an executable command.
 type Command struct {
@@ -72,6 +90,8 @@ type Command struct {
 	// Flag and option parsing is best-effort in this mode, so even if an Option
 	// is "required" it may not be set.
 	CompletionHandler CompletionHandlerFunc
+
+	ContactInfo *ContactInfo
 }
 
 // AddSubcommands adds the given subcommands, setting their
@@ -119,16 +139,16 @@ func (c *Command) init() error {
 			case opt.YAML != "":
 				opt.Name = opt.YAML
 			default:
-				merr = errors.Join(merr, xerrors.Errorf("option must have a Name, Flag, Env or YAML field"))
+				merr = errors.Join(merr, fmt.Errorf("option must have a Name, Flag, Env or YAML field"))
 			}
 		}
 		if opt.Description != "" {
 			// Enforce that description uses sentence form.
 			if unicode.IsLower(rune(opt.Description[0])) {
-				merr = errors.Join(merr, xerrors.Errorf("option %q description should start with a capital letter", opt.Name))
+				merr = errors.Join(merr, fmt.Errorf("option %q description should start with a capital letter", opt.Name))
 			}
 			if !strings.HasSuffix(opt.Description, ".") {
-				merr = errors.Join(merr, xerrors.Errorf("option %q description should end with a period", opt.Name))
+				merr = errors.Join(merr, fmt.Errorf("option %q description should end with a period", opt.Name))
 			}
 		}
 	}
@@ -143,7 +163,7 @@ func (c *Command) init() error {
 		child.Parent = c
 		err := child.init()
 		if err != nil {
-			merr = errors.Join(merr, xerrors.Errorf("command %v: %w", child.Name(), err))
+			merr = errors.Join(merr, fmt.Errorf("command %v: %w", child.Name(), err))
 		}
 	}
 	return merr
@@ -197,6 +217,7 @@ func (c *Command) Invoke(args ...string) *Invocation {
 		Stdout:  io.Discard,
 		Stderr:  io.Discard,
 		Stdin:   strings.NewReader(""),
+		Logger:  logger,
 	}
 }
 
@@ -217,12 +238,42 @@ type Invocation struct {
 	Stderr  io.Writer
 	Stdin   io.Reader
 
-	Logger *slog.Logger
+	Logger *log.Logger
 	// Deprecated
 	Net Net
 
 	// testing
 	signalNotifyContext func(parent context.Context, signals ...os.Signal) (ctx context.Context, stop context.CancelFunc)
+}
+
+// Print is a convenience method to Print to the defined output, fallback to Stderr if not set.
+func (inv *Invocation) Print(i ...interface{}) {
+	fmt.Fprint(inv.Stdout, i...)
+}
+
+// Println is a convenience method to Println to the defined output, fallback to Stderr if not set.
+func (inv *Invocation) Println(i ...interface{}) {
+	inv.Print(fmt.Sprintln(i...))
+}
+
+// Printf is a convenience method to Printf to the defined output, fallback to Stderr if not set.
+func (inv *Invocation) Printf(format string, i ...interface{}) {
+	inv.Print(fmt.Sprintf(format, i...))
+}
+
+// PrintErr is a convenience method to Print to the defined Err output, fallback to Stderr if not set.
+func (inv *Invocation) PrintErr(i ...interface{}) {
+	fmt.Fprint(inv.Stderr, i...)
+}
+
+// PrintErrln is a convenience method to Println to the defined Err output, fallback to Stderr if not set.
+func (inv *Invocation) PrintErrln(i ...interface{}) {
+	inv.PrintErr(fmt.Sprintln(i...))
+}
+
+// PrintErrf is a convenience method to Printf to the defined Err output, fallback to Stderr if not set.
+func (inv *Invocation) PrintErrf(format string, i ...interface{}) {
+	inv.PrintErr(fmt.Sprintf(format, i...))
 }
 
 // WithOS returns the invocation as a main package, filling in the invocation's unset
@@ -235,9 +286,7 @@ func (inv *Invocation) WithOS() *Invocation {
 		i.Args = os.Args[1:]
 		i.Environ = ParseEnviron(os.Environ(), "")
 		i.Net = osNet{}
-		i.Logger = slog.New(tint.NewHandler(i.Stderr, &tint.Options{
-			TimeFormat: time.Kitchen,
-		}))
+		log.SetOutput(i.Stderr)
 	})
 }
 
@@ -333,7 +382,7 @@ func (inv *Invocation) run(state *runState) error {
 	}
 	err := inv.Command.Options.ParseEnv(inv.Environ)
 	if err != nil {
-		return xerrors.Errorf("parsing env: %w", err)
+		return fmt.Errorf("parsing env: %w", err)
 	}
 
 	// Now the fun part, argument parsing!
@@ -343,7 +392,7 @@ func (inv *Invocation) run(state *runState) error {
 		child.Parent = inv.Command
 		for _, name := range append(child.Aliases, child.Name()) {
 			if _, ok := children[name]; ok {
-				return xerrors.Errorf("duplicate command name: %s", name)
+				return fmt.Errorf("duplicate command name: %s", name)
 			}
 			children[name] = child
 		}
@@ -390,24 +439,24 @@ func (inv *Invocation) run(state *runState) error {
 
 		byt, err := os.ReadFile(path.String())
 		if err != nil {
-			return xerrors.Errorf("reading yaml: %w", err)
+			return fmt.Errorf("reading yaml: %w", err)
 		}
 
 		var n yaml.Node
 		err = yaml.Unmarshal(byt, &n)
 		if err != nil {
-			return xerrors.Errorf("decoding yaml: %w", err)
+			return fmt.Errorf("decoding yaml: %w", err)
 		}
 
 		err = inv.Command.Options.UnmarshalYAML(&n)
 		if err != nil {
-			return xerrors.Errorf("applying yaml: %w", err)
+			return fmt.Errorf("applying yaml: %w", err)
 		}
 	}
 
 	err = inv.Command.Options.SetDefaults()
 	if err != nil {
-		return xerrors.Errorf("setting defaults: %w", err)
+		return fmt.Errorf("setting defaults: %w", err)
 	}
 
 	// Run child command if found (next child only)
@@ -436,7 +485,7 @@ func (inv *Invocation) run(state *runState) error {
 
 	// Flag parse errors are irrelevant for raw args commands.
 	if !ignoreFlagParseErrors && state.flagParseErr != nil && !errors.Is(state.flagParseErr, pflag.ErrHelp) {
-		return xerrors.Errorf(
+		return fmt.Errorf(
 			"parsing flags (%v) for %q: %w",
 			state.allArgs,
 			inv.Command.FullName(), state.flagParseErr,
@@ -458,7 +507,7 @@ func (inv *Invocation) run(state *runState) error {
 	}
 	// Don't error for missing flags if `--help` was supplied.
 	if len(missing) > 0 && !inv.IsCompletionMode() && !errors.Is(state.flagParseErr, pflag.ErrHelp) {
-		return xerrors.Errorf("Missing values for the required flags: %s", strings.Join(missing, ", "))
+		return fmt.Errorf("Missing values for the required flags: %s", strings.Join(missing, ", "))
 	}
 
 	if inv.Command.RawArgs {
@@ -544,21 +593,21 @@ func findArg(want string, args []string, fs *pflag.FlagSet) (int, error) {
 		// for the next arg to be the value.
 		f := fs.Lookup(strings.TrimLeft(arg, "-"))
 		if f == nil {
-			return -1, xerrors.Errorf("unknown flag: %s", arg)
+			return -1, fmt.Errorf("unknown flag: %s", arg)
 		}
 		if f.NoOptDefVal != "" {
 			continue
 		}
 
 		if i == len(args)-1 {
-			return -1, xerrors.Errorf("flag %s requires a value", arg)
+			return -1, fmt.Errorf("flag %s requires a value", arg)
 		}
 
 		// Skip the value.
 		i++
 	}
 
-	return -1, xerrors.Errorf("arg %s not found", want)
+	return -1, fmt.Errorf("arg %s not found", want)
 }
 
 // Run executes the command.
@@ -568,7 +617,7 @@ func findArg(want string, args []string, fs *pflag.FlagSet) (int, error) {
 func (inv *Invocation) Run() (err error) {
 	err = inv.Command.init()
 	if err != nil {
-		return xerrors.Errorf("initializing command: %w", err)
+		return fmt.Errorf("initializing command: %w", err)
 	}
 
 	defer func() {
@@ -577,7 +626,7 @@ func (inv *Invocation) Run() (err error) {
 			return
 		}
 		if r := recover(); r != nil {
-			err = xerrors.Errorf("panic recovered for %s: %v", inv.Command.FullName(), r)
+			err = fmt.Errorf("panic recovered for %s: %v", inv.Command.FullName(), r)
 			panic(err)
 		}
 	}()
@@ -722,11 +771,11 @@ func RequireRangeArgs(start, end int) MiddlewareFunc {
 				switch start {
 				case 0:
 					if len(i.Command.Children) > 0 {
-						return xerrors.Errorf("unrecognized subcommand %q", i.Args[0])
+						return fmt.Errorf("unrecognized subcommand %q", i.Args[0])
 					}
-					return xerrors.Errorf("wanted no args but got %v %v", got, i.Args)
+					return fmt.Errorf("wanted no args but got %v %v", got, i.Args)
 				default:
-					return xerrors.Errorf(
+					return fmt.Errorf(
 						"wanted %v args but got %v %v",
 						start,
 						got,
@@ -736,7 +785,7 @@ func RequireRangeArgs(start, end int) MiddlewareFunc {
 			case start > 0 && end == -1:
 				switch {
 				case got < start:
-					return xerrors.Errorf(
+					return fmt.Errorf(
 						"wanted at least %v args but got %v",
 						start,
 						got,
@@ -747,7 +796,7 @@ func RequireRangeArgs(start, end int) MiddlewareFunc {
 			case start > end:
 				panic("start must be <= end")
 			case got < start || got > end:
-				return xerrors.Errorf(
+				return fmt.Errorf(
 					"wanted between %v and %v args but got %v",
 					start, end,
 					got,

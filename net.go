@@ -1,11 +1,11 @@
 package serpent
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 
 	"github.com/pion/udp"
-	"golang.org/x/xerrors"
 )
 
 // Net abstracts CLI commands interacting with the operating system networking.
@@ -28,13 +28,13 @@ func (osNet) Listen(network, address string) (net.Listener, error) {
 	case "udp":
 		host, port, err := net.SplitHostPort(address)
 		if err != nil {
-			return nil, xerrors.Errorf("split %q: %w", address, err)
+			return nil, fmt.Errorf("split %q: %w", address, err)
 		}
 
 		var portInt int
 		portInt, err = strconv.Atoi(port)
 		if err != nil {
-			return nil, xerrors.Errorf("parse port %v from %q as int: %w", port, address, err)
+			return nil, fmt.Errorf("parse port %v from %q as int: %w", port, address, err)
 		}
 
 		// Use pion here so that we get a stream-style net.Conn listener, instead
@@ -45,6 +45,6 @@ func (osNet) Listen(network, address string) (net.Listener, error) {
 			Port: portInt,
 		})
 	default:
-		return nil, xerrors.Errorf("unknown listen network %q", network)
+		return nil, fmt.Errorf("unknown listen network %q", network)
 	}
 }

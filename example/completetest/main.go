@@ -45,6 +45,9 @@ func main() {
 	cmd := serpent.Command{
 		Use:   "completetest <text>",
 		Short: "Prints the given text to the console.",
+		ContactInfo: &serpent.ContactInfo{
+			Issues: "https://github.com/bketelsen/serpent/issues/new",
+		},
 		Options: serpent.OptionSet{
 			{
 				Name:        "different",
@@ -56,6 +59,7 @@ func main() {
 		Handler: func(inv *serpent.Invocation) error {
 			if len(inv.Args) == 0 {
 				inv.Stderr.Write([]byte("error: missing text\n"))
+
 				os.Exit(1)
 			}
 
@@ -64,7 +68,7 @@ func main() {
 				text = strings.ToUpper(text)
 			}
 
-			inv.Stdout.Write([]byte(text))
+			inv.Println(text)
 			return nil
 		},
 		Children: []*serpent.Command{

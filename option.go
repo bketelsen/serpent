@@ -3,13 +3,13 @@ package serpent
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"slices"
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/pflag"
-	"golang.org/x/xerrors"
 )
 
 type ValueSource string
@@ -125,10 +125,10 @@ func (optSet *OptionSet) UnmarshalJSON(data []byte) error {
 	// Should be a json array, so consume the starting open bracket.
 	t, err := dec.Token()
 	if err != nil {
-		return xerrors.Errorf("read array open bracket: %w", err)
+		return fmt.Errorf("read array open bracket: %w", err)
 	}
 	if t != json.Delim('[') {
-		return xerrors.Errorf("expected array open bracket, got %q", t)
+		return fmt.Errorf("expected array open bracket, got %q", t)
 	}
 
 	// As long as json elements exist, consume them. The counter is used for
@@ -143,7 +143,7 @@ OptionSetDecodeLoop:
 		opt.Value = &jValue
 		err := dec.Decode(&opt)
 		if err != nil {
-			return xerrors.Errorf("decode %d option: %w", i, err)
+			return fmt.Errorf("decode %d option: %w", i, err)
 		}
 		// This counter is used to contextualize errors to show which element of
 		// the array we failed to decode. It is only used in the error above, as
@@ -158,7 +158,7 @@ OptionSetDecodeLoop:
 				if jValue != nil {
 					err := json.Unmarshal(jValue, &(*optSet)[optIndex].Value)
 					if err != nil {
-						return xerrors.Errorf("decode option %q value: %w", have.Name, err)
+						return fmt.Errorf("decode option %q value: %w", have.Name, err)
 					}
 					// Set the opt's value
 					opt.Value = (*optSet)[optIndex].Value
@@ -183,10 +183,10 @@ OptionSetDecodeLoop:
 
 	t, err = dec.Token()
 	if err != nil {
-		return xerrors.Errorf("read array close bracket: %w", err)
+		return fmt.Errorf("read array close bracket: %w", err)
 	}
 	if t != json.Delim(']') {
-		return xerrors.Errorf("expected array close bracket, got %q", t)
+		return fmt.Errorf("expected array close bracket, got %q", t)
 	}
 
 	return nil
@@ -297,7 +297,7 @@ func (optSet *OptionSet) ParseEnv(vs []EnvVar) error {
 		(*optSet)[i].ValueSource = ValueSourceEnv
 		if err := opt.Value.Set(envVal); err != nil {
 			merr = multierror.Append(
-				merr, xerrors.Errorf("parse %q: %w", opt.Name, err),
+				merr, fmt.Errorf("parse %q: %w", opt.Name, err),
 			)
 		}
 	}
@@ -323,7 +323,7 @@ func (optSet *OptionSet) SetDefaults() error {
 		if opt.Value == nil {
 			merr = multierror.Append(
 				merr,
-				xerrors.Errorf(
+				fmt.Errorf(
 					"parse %q: no Value field set\nFull opt: %+v",
 					opt.Name, opt,
 				),
@@ -371,7 +371,7 @@ func (optSet *OptionSet) SetDefaults() error {
 			if optWithDefault != nil && optWithDefault.Default != opt.Default {
 				merr = multierror.Append(
 					merr,
-					xerrors.Errorf(
+					fmt.Errorf(
 						"parse %q: multiple defaults set for the same value: %q and %q (%q)",
 						opt.Name, opt.Default, optWithDefault.Default, optWithDefault.Name,
 					),
@@ -385,7 +385,7 @@ func (optSet *OptionSet) SetDefaults() error {
 		}
 		if err := optWithDefault.Value.Set(optWithDefault.Default); err != nil {
 			merr = multierror.Append(
-				merr, xerrors.Errorf("parse %q: %w", optWithDefault.Name, err),
+				merr, fmt.Errorf("parse %q: %w", optWithDefault.Name, err),
 			)
 		}
 		for _, opt := range opts {

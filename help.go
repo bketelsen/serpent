@@ -16,7 +16,6 @@ import (
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/muesli/termenv"
 	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/xerrors"
 
 	"github.com/coder/pretty"
 )
@@ -346,7 +345,7 @@ func DefaultHelpFn() HandlerFunc {
 		tabwriter := tabwriter.NewWriter(&out, 0, 0, 2, ' ', 0)
 		err := defaultHelpTemplate.Execute(tabwriter, inv.Command)
 		if err != nil {
-			return xerrors.Errorf("execute template: %w", err)
+			return fmt.Errorf("execute template: %w", err)
 		}
 		err = tabwriter.Flush()
 		if err != nil {
